@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Invoice.Data;
+using Microsoft.AspNetCore.Authorization;
 
 namespace InvoiceProcess.Controllers
 {
@@ -19,6 +20,7 @@ namespace InvoiceProcess.Controllers
         }
 
         // GET: ّInvoice
+        [Authorize(Roles = "Employee")]
         public async Task<IActionResult> Index()
         {
             return View(await _context.InvoiceModel.ToListAsync());

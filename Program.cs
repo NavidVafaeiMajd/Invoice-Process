@@ -1,11 +1,10 @@
 using Invoice.Data;
+using InvoiceProcess.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection;
-
+ 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<MvcInvoiceContext>(options =>
     options.UseSqlite(
@@ -20,6 +19,7 @@ builder
     .Services.AddDefaultIdentity<IdentityUser>(options =>
         options.SignIn.RequireConfirmedAccount = true
     )
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<MvcInvoiceContext>();
 builder.Services.AddRazorPages();
 
@@ -77,6 +77,13 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    await DbInitializer.SeedRoles(services);
+}
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
