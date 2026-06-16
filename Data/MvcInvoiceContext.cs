@@ -15,5 +15,6 @@ namespace Invoice.Data
         }
 
         public DbSet<InvoiceModel> InvoiceModel { get; set; } = default!;
+        public DbSet<InvoiceHistory> InvoiceHistory { get; set; } = default!;
     }
 }
