@@ -2,25 +2,29 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Invoice.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Invoice.Data;
-using Microsoft.AspNetCore.Authorization;
+using InvoiceProcess.Services;
 
 namespace InvoiceProcess.Controllers
 {
     public class InvoiceController : Controller
     {
-        private readonly MvcInvoiceContext _context;
+        
+private readonly MvcInvoiceContext _context;
+        private readonly IInvoiceWorkflowService _workflow;
 
-        public InvoiceController(MvcInvoiceContext context)
+        public InvoiceController(MvcInvoiceContext context, IInvoiceWorkflowService workflow)
         {
             _context = context;
+            _workflow = workflow;
         }
 
         // GET: ّInvoice
-        [Authorize(Roles = "Employee")]
+        [Authorize(Roles = "Employee,Manager")]
         public async Task<IActionResult> Index()
         {
             return View(await _context.InvoiceModel.ToListAsync());
@@ -34,8 +38,7 @@ namespace InvoiceProcess.Controllers
                 return NotFound();
             }
 
-            var invoiceModel = await _context.InvoiceModel
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var invoiceModel = await _context.InvoiceModel.FirstOrDefaultAsync(m => m.Id == id);
             if (invoiceModel == null)
             {
                 return NotFound();
@@ -45,6 +48,7 @@ namespace InvoiceProcess.Controllers
         }
 
         // GET: ّInvoice/Create
+        [Authorize(Roles = "Employee")]
         public IActionResult Create()
         {
             return View();
@@ -55,16 +59,36 @@ namespace InvoiceProcess.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,InvoiceDate,InvoiceBuyer,TotalAmount")] InvoiceModel invoiceModel)
+        public async Task<IActionResult> Create(
+            [Bind("Id,InvoiceDate,InvoiceBuyer,TotalAmount")] InvoiceModel invoiceModel
+        )
         {
             if (ModelState.IsValid)
             {
-                _context.Add(invoiceModel);
+                var invoice = new InvoiceModel
+                {
+                    InvoiceDate = invoiceModel.InvoiceDate,
+                    InvoiceBuyer = invoiceModel.InvoiceBuyer,
+                    TotalAmount = invoiceModel.TotalAmount,
+                    Status = InvoiceStatus.Draft,
+                };
+                Console.WriteLine(invoice);
+                _context.Add(invoice);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(invoiceModel);
         }
+
+
+[HttpPost]
+        public async Task<IActionResult> Submit(int id)
+        {
+            await _workflow.Execute(id, InvoiceAction.Submit);
+
+            return RedirectToAction("Details", new { id });
+        }
+
 
         // GET: ّInvoice/Edit/5
         public async Task<IActionResult> Edit(int? id)
@@ -87,7 +111,10 @@ namespace InvoiceProcess.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,InvoiceDate,InvoiceBuyer,TotalAmount")] InvoiceModel invoiceModel)
+        public async Task<IActionResult> Edit(
+            int id,
+            [Bind("Id,InvoiceDate,InvoiceBuyer,TotalAmount")] InvoiceModel invoiceModel
+        )
         {
             if (id != invoiceModel.Id)
             {
@@ -125,8 +152,7 @@ namespace InvoiceProcess.Controllers
                 return NotFound();
             }
 
-            var invoiceModel = await _context.InvoiceModel
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var invoiceModel = await _context.InvoiceModel.FirstOrDefaultAsync(m => m.Id == id);
             if (invoiceModel == null)
             {
                 return NotFound();

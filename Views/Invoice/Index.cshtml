@@ -21,6 +21,9 @@
             <th>
                 @Html.DisplayNameFor(model => model.TotalAmount)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Status)
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -33,13 +36,24 @@
             <td>
                 @Html.DisplayFor(modelItem => item.InvoiceBuyer)
             </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TotalAmount)
-            </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TotalAmount)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Status)
+                </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
                 <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> |
+                    <form method="post" asp-action="Submit">
+
+                        <input type="hidden" name="id" value="@item.Id" />
+
+                        <button>
+                            Send For Approval
+                        </button>
+                    </form>
             </td>
         </tr>
 }

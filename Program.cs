@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
- 
+using InvoiceProcess.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<MvcInvoiceContext>(options =>
     options.UseSqlite(
@@ -22,7 +23,7 @@ builder
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<MvcInvoiceContext>();
 builder.Services.AddRazorPages();
-
+builder.Services.AddScoped<IInvoiceWorkflowService, InvoiceWorkflowService>();
 builder.Services.Configure<IdentityOptions>(options =>
 {
     // Password settings.
