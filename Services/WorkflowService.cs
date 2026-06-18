@@ -48,6 +48,20 @@ namespace InvoiceProcess.Services
 
             // Optionally record history if the model exists
 
+            _context.InvoiceHistory.Add(
+                new InvoiceHistory
+                {
+                    InvoiceId = invoice.Id,
+
+                    FromStatus = currentStatus,
+
+                    Action = action,
+
+                    ToStatus = transition.To,
+
+                    CreatedAt = DateTime.UtcNow,
+                }
+            );
 
             await _context.SaveChangesAsync();
         }
