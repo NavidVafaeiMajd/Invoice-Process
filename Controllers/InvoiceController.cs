@@ -3,18 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Invoice.Data;
+using InvoiceProcess.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using InvoiceProcess.Services;
 
 namespace InvoiceProcess.Controllers
 {
     public class InvoiceController : Controller
     {
-        
-private readonly MvcInvoiceContext _context;
+        private readonly MvcInvoiceContext _context;
         private readonly IInvoiceWorkflowService _workflow;
 
         public InvoiceController(MvcInvoiceContext context, IInvoiceWorkflowService workflow)
@@ -27,7 +26,14 @@ private readonly MvcInvoiceContext _context;
         [Authorize(Roles = "Employee,Manager")]
         public async Task<IActionResult> Index()
         {
-            return View(await _context.InvoiceModel.ToListAsync());
+            var invoices = _context.InvoiceModel.AsQueryable();
+
+            if (User.IsInRole("Manager"))
+            {
+                invoices = invoices.Where(i => i.Status != InvoiceStatus.Draft);
+            }
+
+            return View(await invoices.ToListAsync());
         }
 
         // GET: ّInvoice/Details/5
@@ -80,15 +86,23 @@ private readonly MvcInvoiceContext _context;
             return View(invoiceModel);
         }
 
+        [Authorize(Roles = "Manager")]
+        [HttpPost]
+        public async Task<IActionResult> Approve(int id)
+        {
+            await _workflow.Execute(id, InvoiceAction.Approve);
 
-[HttpPost]
-        public async Task<IActionResult> Submit(int id)
+            return RedirectToAction("Details", new { id });
+        }
+
+        [Authorize(Roles = "Employee")]
+        [HttpPost]
+        public async Task<IActionResult> SendForApproval(int id)
         {
             await _workflow.Execute(id, InvoiceAction.Submit);
 
             return RedirectToAction("Details", new { id });
         }
-
 
         // GET: ّInvoice/Edit/5
         public async Task<IActionResult> Edit(int? id)

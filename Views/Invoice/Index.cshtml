@@ -28,34 +28,47 @@
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.InvoiceDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.InvoiceBuyer)
-            </td>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.InvoiceDate)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.InvoiceBuyer)
+                </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.TotalAmount)
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.Status)
                 </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> |
-                    <form method="post" asp-action="Submit">
+                <td class="d-flex align-items-center">
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a> |
+                    @if (User.IsInRole("Employee") && item.Status == InvoiceStatus.Draft)
+                    {
+                        <form method="post" asp-action="SendForApproval">
+                            <input type="hidden" name="id" value="@item.Id" />
 
-                        <input type="hidden" name="id" value="@item.Id" />
+                            <button type="submit" class="btn btn-primary">
+                                Send For Approval
+                            </button>
+                        </form>
+                    }
+                    @if (User.IsInRole("Manager") && item.Status == InvoiceStatus.PendingApproval)
+                    {
+                        <form method="post" asp-action="Approve">
+                            <input type="hidden" name="id" value="@item.Id" />
 
-                        <button>
-                            Send For Approval
-                        </button>
-                    </form>
-            </td>
-        </tr>
-}
+                            <button type="submit" class="btn btn-success">
+                                Approve
+                            </button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
     </tbody>
 </table>
